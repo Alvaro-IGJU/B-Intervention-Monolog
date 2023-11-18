@@ -7,13 +7,13 @@ class ServiceReparation
 
     public function __construct()
     {
-        $this->log = new Monolog\Logger("LogDB");
+        $this->log = new Monolog\Logger("app_workshop");
     }
     public function connect()
     {
         // Load database configuration from ini file
         $config = parse_ini_file('../db_config.ini');
-       
+
 
         // Establish a database connection using PDO
         try {
@@ -23,11 +23,11 @@ class ServiceReparation
                 $config['DB_PASS']
             );
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::INFO));
+            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::INFO));
             $this->log->info("Connection successfully");
         } catch (PDOException $e) {
             // Handle connection errors here
-            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::ERROR));
+            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::ERROR));
             $this->log->error("Error connection db: " . $e->getMessage());
         }
     }
@@ -42,7 +42,7 @@ class ServiceReparation
             $id = $reparation->getId();
             $nameWorkshop = $reparation->getNameWorkshop();
             $registerDate = $reparation->getRegisterDate();
-           
+
             $licensePlate = $reparation->getLicensePlate();
             $photo = $reparation->getPhoto();
 
@@ -54,20 +54,19 @@ class ServiceReparation
             $stmt->bindParam(4, $licensePlate);
             $stmt->bindParam(5, $imageData, PDO::PARAM_LOB);
 
-     
-            if($stmt->execute()){
-                 $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::INFO));
+            if ($stmt->execute()) {
+                $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::INFO));
                 $this->log->info("Record inserted successfully");
-            }else{
-                 $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::ERROR));
-                $this->log->info("Error inserting Reparation");
-            }
 
+                return $id;
+            } else {
+                throw new PDOException("Error inserting a record");
+            }
         } catch (PDOException $e) {
             // Handle insertion errors here
-            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::ERROR));
-            $this->log->error("Error inserting a record: ". $e->getMessage());
-    
+            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::ERROR));
+            $this->log->error("Error inserting a record: " . $e->getMessage());
+
             return false; // Return false on failure
         }
     }
@@ -85,18 +84,18 @@ class ServiceReparation
 
             // Fetch the result set as an associative array
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if($result){
-                $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::INFO));
-                $this->log->info("Got reparation: ".$id);
-            }else{
-                $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::ERROR));
-                $this->log->info("Reparation doesn't exist: ".$id);
+            if ($result) {
+                $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::INFO));
+                $this->log->info("Got reparation: " . $id);
+            } else {
+                $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::WARNING));
+                $this->log->warning("Reparation doesn't exist: " . $id);
             }
             return $result; // Return the fetched records
         } catch (PDOException $e) {
             // Handle selection errors here
-            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/LogDB.log", Monolog\Logger::ERROR));
-            echo "Error getting reparation: " . $e->getMessage();
+            $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::WARNING));
+            $this->log->warning("Error getting reparation: " . $id);
             return []; // Return an empty array on failure
         }
     }

@@ -17,9 +17,9 @@ class Reparation {
         $this->nameWorkshop = $nameWorkshop;
         $this->registerDate = $registerDate;
         $this->licensePlate = $licensePlate;
-        $this->photo = $photo;
-        $this->photo->text($this->licensePlate.$this->id, 120, $photo->height()-10,function($font) {
-            $font->size(100);
+        $this->photo = $photo->resize(470,370);
+        $this->photo->text($this->licensePlate.$this->id, $this->photo->width()/2,  $this->photo->height()-10,function($font) {
+            $font->size( 70);
             $font->color('#000000');
             $font->align('center');
             $font->valign('top');

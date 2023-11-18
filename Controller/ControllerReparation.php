@@ -11,12 +11,13 @@ class ControllerReparation{
     }
     
     public function insertReparation(Reparation $reparation){
-        $this->service->insertReparation($reparation);
+        $reparation = $this->service->insertReparation($reparation);
+        return   $reparation;
     }  
     
     public function getReparation(string $id){
-    
-        return  $this->service->getReparation($id);
+        $reparation = $this->service->getReparation($id);
+        return  $reparation;
     }
 
     public function getService(){

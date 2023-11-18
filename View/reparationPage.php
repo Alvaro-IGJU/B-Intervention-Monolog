@@ -10,7 +10,7 @@ $controllerReparation->getService()->connect();
 
 $outputDirectory = "../src/images/outputImg/";
 
-if(!array_key_exists("role",$_SESSION)){
+if (!array_key_exists("role", $_SESSION)) {
     $_SESSION["role"] = "";
 }
 
@@ -29,22 +29,27 @@ if (isset($_GET["getReparation"]) && isset($_GET["idReparation"])) {
     $reparation = $controllerReparation->getReparation($reparationId);
 
     // Verificar si se obtuvo la reparación y la imagen
-    if ($reparation[0]) {
+    if (isset($reparation[0])) {
         // Establecer el tipo MIME de la respuesta como una imagen JPEG
         // header('Cont ent-Type: image/jpg');
         $image = Image::make($reparation[0]["photo"])->resize(600, 500);
         if ($_SESSION["role"] == "client") {
             $watermark = Image::make('..\src\images\watermark.jpg');
             $watermark->pixelate(4);
-            $image->insert($watermark, 'top-left', 0, $image->height() - 12);
+            $image->insert($watermark, 'top-left', 0, $image->height() - 15);
         }
         $imageName = "output_image.jpg"; // Nombre del archivo de salida
         $imagePath = $outputDirectory . $imageName;
         $image->save($imagePath, 90);
         // Mostrar la imagen almacenada en el BLOB
+        echo "<div style='width:100%;text-align:center;'>";
+        echo "<p><b>Name:</b> ".$reparation[0]["name_workshop"]."</p>";
+        echo "<p><b>Register date:</b> ".$reparation[0]["register_date"]."</p>";
+        echo "<p><b>License plate:</b> ".$reparation[0]["license_plate"]."</p>";
         echo "<img style='' src='" . $imagePath . "'>";
-        // echo "<img src=".$reparation[0]["photo"].">";
-
+        echo "</div>";
+    }else{
+        echo '<div class="alert alert-danger">Reparation doesn\'t exist.</div>';
     }
 }
 
@@ -55,14 +60,31 @@ if (isset($_POST["insert"])) {
     $date = $_POST["insertDate"];
     $licensePlate = $_POST["insertLicensePlate"];
 
+
     // Procesamiento de la imagen con Intervention Image
-    $uploadedFile = $_FILES['insertPhoto'];
-    $photoPath = $uploadedFile['tmp_name'];
-    $photo = Image::make($photoPath);
-    $watermark = Image::make('..\src\images\watermark.jpg')->opacity(50);
-    $watermark->pixelate(4);
-    $photo->insert($watermark, 'top-left', 0, $photo->height() - 12);
-    $controllerReparation->insertReparation(new Reparation($name, $date, $licensePlate, $photo));
+    if (
+        strlen($name) <= 12 &&
+        preg_match('/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2]\d|3[0-1])$/', $date) &&
+        preg_match('/^\d{4}-[A-Za-z]{3}$/i', $licensePlate)
+    ) {
+        $uploadedFile = $_FILES['insertPhoto'];
+        $photoPath = $uploadedFile['tmp_name'];
+        $photo = Image::make($photoPath);
+        $watermark = Image::make('..\src\images\watermark.jpg')->opacity(50);
+        $watermark->pixelate(4);
+        $watermark->resize($photo->width(),null);
+        $photo->insert($watermark, 'top-left', 0, $photo->height() - 12);
+        $inserted =  $controllerReparation->insertReparation(new Reparation($name, $date, $licensePlate, $photo));
+        if ($inserted) {
+            // Display reparation number if the insertion is successful
+            echo '<div class="alert alert-success">Reparation ID: ' . $inserted . '</div>';
+        } else {
+            // Show an error message if insertion fails
+            echo '<div class="alert alert-danger">Error inserting the repair record.</div>';
+        }
+    } else {
+        echo '<div class="alert alert-danger">Incorrect parameters format.</div>';
+    }
 }
 ?>
 
@@ -85,16 +107,13 @@ if (isset($_POST["insert"])) {
             <input type="text" name="idReparation" class="form-control">
             <button type="submit" name="getReparation" class="btn btn-primary mt-2">Search</button>
         </form>
-
-        <a href="index.php">Back</a>
     </div>
 
 
-        <!--INSERT-->
+    <!--INSERT-->
     <?php
-    if($_SESSION["role"] == "employee"){
-    echo '
-
+    if ($_SESSION["role"] == "employee") {
+        echo '
     <div class="container mt-4">
         <form action="" method="post" enctype="multipart/form-data" class="mb-3">
             <div class="mb-3">
@@ -102,12 +121,13 @@ if (isset($_POST["insert"])) {
                 <input type="text" name="insertName" class="form-control">
             </div>
             <div class="mb-3">
-                <label for="date" class="form-label">Date:</label>
-                <input type="date" name="insertDate" class="form-control">
+            <label for="date" class="form-label">Date (yyyy-mm-dd):</label>
+            <input type="text" name="insertDate" class="form-control" placeholder="YYYY-MM-DD" title="Please enter a date in the format yyyy-mm-dd">
+        
             </div>
             <div class="mb-3">
                 <label for="licensePlate" class="form-label">License Plate:</label>
-                <input type="text" name="insertLicensePlate" class="form-control">
+                <input type="text" name="insertLicensePlate" class="form-control" placeholder="9999-XXX" >
             </div>
             <div class="mb-3">
                 <label for="photo" class="form-label">Photo:</label>
@@ -116,9 +136,10 @@ if (isset($_POST["insert"])) {
             <button type="submit" name="insert" class="btn btn-primary">Insert reparation</button>
         </form>
 
-        <a href="index.php" class="btn btn-secondary">Back</a>
-    </div>';}?>
-
+      
+    </div>';
+    } ?>
+    <a href="index.php" class="btn btn-secondary">Back</a>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
