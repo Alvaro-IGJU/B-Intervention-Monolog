@@ -34,9 +34,9 @@ if (isset($_GET["getReparation"]) && isset($_GET["idReparation"])) {
         // header('Cont ent-Type: image/jpg');
         $image = Image::make($reparation[0]["photo"])->resize(600, 500);
         if ($_SESSION["role"] == "client") {
-            $watermark = Image::make('..\src\images\watermark.jpg');
-            $watermark->pixelate(4);
-            $image->insert($watermark, 'top-left', 0, $image->height() - 15);
+            $occult = Image::make('..\src\images\watermark.jpg');
+            $occult->pixelate(4);
+            $image->insert($occult, 'top-left', 0, $image->height() - 15);
         }
         $imageName = "output_image.jpg"; // Nombre del archivo de salida
         $imagePath = $outputDirectory . $imageName;
