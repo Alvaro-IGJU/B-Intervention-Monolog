@@ -11,8 +11,8 @@ class ControllerReparation{
     }
     
     public function insertReparation(Reparation $reparation){
-        $reparation = $this->service->insertReparation($reparation);
-        return   $reparation;
+        $uuid = $this->service->insertReparation($reparation);
+        return $uuid;
     }  
     
     public function getReparation(string $id){
@@ -24,3 +24,4 @@ class ControllerReparation{
         return $this->service;
     }
 }
+

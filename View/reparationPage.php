@@ -29,23 +29,23 @@ if (isset($_GET["getReparation"]) && isset($_GET["idReparation"])) {
     $reparation = $controllerReparation->getReparation($reparationId);
 
     // Verificar si se obtuvo la reparación y la imagen
-    if (isset($reparation[0])) {
+    if (isset($reparation)) {
         // Establecer el tipo MIME de la respuesta como una imagen JPEG
         // header('Cont ent-Type: image/jpg');
-        $image = Image::make($reparation[0]["photo"])->resize(600, 500);
+       
         if ($_SESSION["role"] == "client") {
             $occult = Image::make('..\src\images\watermark.jpg');
             $occult->pixelate(4);
-            $image->insert($occult, 'top-left', 0, $image->height() - 15);
+            $reparation->getPhoto()->insert($occult, 'top-left', 0,  $reparation->getPhoto()->height() - 15);
         }
         $imageName = "output_image.jpg"; // Nombre del archivo de salida
         $imagePath = $outputDirectory . $imageName;
-        $image->save($imagePath, 90);
+        $reparation->getPhoto()->save($imagePath, 90);
         // Mostrar la imagen almacenada en el BLOB
         echo "<div style='width:100%;text-align:center;'>";
-        echo "<p><b>Name:</b> ".$reparation[0]["name_workshop"]."</p>";
-        echo "<p><b>Register date:</b> ".$reparation[0]["register_date"]."</p>";
-        echo "<p><b>License plate:</b> ".$reparation[0]["license_plate"]."</p>";
+        echo "<p><b>Name:</b> ".$reparation->getNameWorkshop()."</p>";
+        echo "<p><b>Register date:</b> ".$reparation->getRegisterDate()."</p>";
+        echo "<p><b>License plate:</b> ".$reparation->getLicensePlate()."</p>";
         echo "<img style='' src='" . $imagePath . "'>";
         echo "</div>";
     }else{
@@ -70,10 +70,6 @@ if (isset($_POST["insert"])) {
         $uploadedFile = $_FILES['insertPhoto'];
         $photoPath = $uploadedFile['tmp_name'];
         $photo = Image::make($photoPath);
-        $watermark = Image::make('..\src\images\watermark.jpg')->opacity(50);
-        $watermark->pixelate(4);
-        $watermark->resize($photo->width(),null);
-        $photo->insert($watermark, 'top-left', 0, $photo->height() - 12);
         $inserted =  $controllerReparation->insertReparation(new Reparation($name, $date, $licensePlate, $photo));
         if ($inserted) {
             // Display reparation number if the insertion is successful

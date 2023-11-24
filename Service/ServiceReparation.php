@@ -1,13 +1,17 @@
 <?php
+use Intervention\Image\ImageManagerStatic as Image; // Importa el namespace adecuado
+
 
 class ServiceReparation
 {
     private $db; // PDO object for database connection
     private $log;
 
+    
     public function __construct()
     {
         $this->log = new Monolog\Logger("app_workshop");
+        $this->connect();
     }
     public function connect()
     {
@@ -35,6 +39,20 @@ class ServiceReparation
     public function insertReparation(Reparation $reparation)
     {
         try {
+            
+            $photo = $reparation->getPhoto();
+           
+            $watermark = Image::make('..\src\images\watermark.jpg')->opacity(50);
+            $watermark->pixelate(4);
+            $watermark->resize($photo->width(),null);
+            $photo->insert($watermark, 'top-left', 0, $photo->height() - 12);
+            $photo->text($reparation->getLicensePlate().$reparation->getId(), $reparation->getPhoto()->width()/2,  $reparation->getPhoto()->height()-10,function($font) {
+                $font->size( 70);
+                $font->color('#000000');
+                $font->align('center');
+                $font->valign('top');
+                $font->angle(45);
+            });
             // Prepare the SQL query for inserting a reparation record
             $query = "INSERT INTO Reparation (id,name_workshop, register_date, license_plate, photo) VALUES (?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($query);
@@ -91,7 +109,8 @@ class ServiceReparation
                 $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::WARNING));
                 $this->log->warning("Reparation doesn't exist: " . $id);
             }
-            return $result; // Return the fetched records
+            $image = Image::make($result[0]["photo"])->resize(600, 500);
+            return new Reparation($result[0]["name_workshop"],$result[0]["register_date"],$result[0]["license_plate"],$image); // Return the fetched records
         } catch (PDOException $e) {
             // Handle selection errors here
             $this->log->pushHandler(new Monolog\Handler\StreamHandler("../logs/app_workshop.log", Monolog\Logger::WARNING));
